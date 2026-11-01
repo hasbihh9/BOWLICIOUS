@@ -3,65 +3,37 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-<link
-      rel="shortcut icon"
-      href="foto produk/logo-bowlicious.png"
-      type="image/x-icon"
-    />
-
+    <link rel="shortcut icon" href="foto produk/logo-bowlicious.png" type="image/x-icon" />
     <title>Premium Modern Street Food | BOWLICIOUS</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Oswald:wght@500;700&display=swap"
-      rel="stylesheet"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Oswald:wght@500;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <link rel="stylesheet" href="style.css" />
   </head>
   <body data-page="home">
     <nav id="navbar" class="">
       <div class="nav-container">
         <a href="index.html" class="logo" aria-label="BOWLICIOUS Home">
-    <img src="foto produk/logo-bowlicious.png" alt="Logo BOWLICIOUS" style="height: 40px; width: auto; vertical-align: middle; margin-right: 10px;">
-    <span>BOWLICIOUS</span>
-</a>
-        <button
-          class="menu-toggle"
-          id="mobile-menu"
-          aria-label="Buka menu"
-          aria-expanded="false"
-        >
+          <img src="foto produk/logo-bowlicious.png" alt="Logo BOWLICIOUS" style="height: 40px; width: auto; vertical-align: middle; margin-right: 10px;">
+          <span>BOWLICIOUS</span>
+        </a>
+        <button class="menu-toggle" id="mobile-menu" aria-label="Buka menu" aria-expanded="false">
           <i class="fas fa-bars"></i>
         </button>
         <ul class="nav-menu" id="nav-menu">
           <li><a href="index.html" class="nav-link active">Home</a></li>
+          <li><a href="menu.html" class="nav-link">Menu</a></li>
           <li><a href="about.html" class="nav-link">About</a></li>
-          <li><a href="pemesanan.html" class="nav-link">Pemesanan</a></li>
           <li><a href="testimoni.html" class="nav-link">Testimoni</a></li>
-          <li>
-            <a href="pemesanan.html" class="btn btn-primary nav-cta"
-              >Pesan Sekarang</a
-            >
-          </li>
+          <li><a href="pemesanan.html" class="btn btn-primary nav-cta">Pesan Sekarang</a></li>
         </ul>
       </div>
     </nav>
 
     <section id="home" class="hero-section">
       <div class="video-container">
-        <video
-          autoplay
-          muted
-          loop
-          playsinline
-          id="hero-video"
-          poster="assets/images/hero-poster.jpg"
-        >
+        <video autoplay muted loop playsinline id="hero-video" poster="assets/images/hero-poster.jpg">
           <source src="vd/CINEMATIC-B-ROLL-SnapYT.App.mp4" type="video/mp4" />
           Browser Anda tidak mendukung tag video.
         </video>
@@ -71,8 +43,7 @@
         <span class="hero-label">YOUR DAILY RICE BOWL</span>
         <h1 class="hero-title">ONE BOWL.<br />FULL OF FLAVOR.</h1>
         <p class="hero-desc">
-          Rasa yang berani, sajian yang praktis, dan pengalaman yang bikin ingin
-          kembali.
+          Rasa yang berani, sajian yang praktis, dan pengalaman yang bikin ingin kembali.
         </p>
         <div class="hero-buttons">
           <a href="pemesanan.html" class="btn btn-primary">PESAN SEKARANG</a>
@@ -84,9 +55,7 @@
 
     <section class="intro-section">
       <div class="container">
-        <h2 class="section-title dark-text text-center reveal">
-          KENAPA BOWLICIOUS?
-        </h2>
+        <h2 class="section-title dark-text text-center reveal">KENAPA BOWLICIOUS?</h2>
         <div class="highlight-grid">
           <div class="highlight-card reveal">
             <i class="fas fa-fire"></i>
@@ -96,9 +65,7 @@
           <div class="highlight-card reveal delay-1">
             <i class="fas fa-bolt"></i>
             <h3>Simple &amp; Practical</h3>
-            <p>
-              Siap disantap, cocok untuk makan siang atau di sela aktivitas.
-            </p>
+            <p>Siap disantap, cocok untuk makan siang atau di sela aktivitas.</p>
           </div>
           <div class="highlight-card reveal delay-2">
             <i class="fas fa-bowl-rice"></i>
@@ -109,25 +76,19 @@
       </div>
     </section>
 
-    <section class="featured-section">
-      <div class="container featured-grid">
-        <img
-          src="foto produk/signature-bowl.jpeg"
-          alt="Bowlicious Signature Bowl"
-          class="featured-img reveal"
-        />
-        <div class="reveal delay-1">
-          <h2 class="section-title">SIGNATURE BOWL</h2>
-          <p class="product-desc">
-            Nasi hangat dengan topping daging premium pilihan, disiram saus
-            rahasia Bowlicious yang berani dan menggugah selera.
-          </p>
-          <h4 class="product-price">Rp14.000</h4>
-          <a href="pemesanan.html" class="btn btn-primary"
-            >PRE-ORDER SEKARANG</a
-          >
+    <!-- BAGIAN ULASAN DI HALAMAN HOME (PENGGANTI SIGNATURE BOWL) -->
+    <section class="review-section" style="background-color: var(--color-cream); padding: 6rem 0;">
+        <div class="container text-center reveal">
+            <h2 class="section-title dark-text">KATA MEREKA</h2>
+            <p class="section-subtitle" style="margin-bottom: 3rem;">Bukti nyata kelezatan di setiap mangkuk Bowlicious.</p>
+            
+            <!-- Wadah untuk 3 ulasan pelanggan -->
+            <div id="homeReviewItems" style="display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap;">
+                <p style="color: #666;"><i class="fas fa-spinner fa-spin"></i> Menyiapkan ulasan terbaik...</p>
+            </div>
+            
+            <a href="testimoni.html" class="btn btn-primary" style="margin-top: 3rem;">LIHAT SEMUA ULASAN</a>
         </div>
-      </div>
     </section>
 
     <footer>
@@ -140,8 +101,8 @@
           <h4>Menu</h4>
           <ul>
             <li><a href="index.html">Home</a></li>
+            <li><a href="menu.html">Menu</a></li>
             <li><a href="about.html">About</a></li>
-            <li><a href="pemesanan.html">Pemesanan</a></li>
             <li><a href="testimoni.html">Testimoni</a></li>
           </ul>
         </div>
@@ -153,9 +114,7 @@
         </div>
       </div>
       <div class="footer-bottom">
-        <p>
-          &copy; <span id="currentYear"></span> BOWLICIOUS. All rights reserved.
-        </p>
+        <p>&copy; <span id="currentYear"></span> BOWLICIOUS. All rights reserved.</p>
       </div>
     </footer>
 
