@@ -714,6 +714,6 @@ footer {
         display: none !important; /* Menyembunyikan video di layar HP */
     }
     .hero-section {
-        background: url('assets/images/hero-poster.jpg') center/cover no-repeat; /* Menampilkan gambar pengganti */
+        background: url('vd/spider\ man.jpg') center/cover no-repeat; /* Menampilkan gambar pengganti */
     }
 }
