@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="shortcut icon"
+      href="foto produk/logo-bowlicious.png"
+      type="image/x-icon"
+    />
+    <title>Menu | BOWLICIOUS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Oswald:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body data-page="menu">
+    <nav id="navbar" class="solid">
+      <div class="nav-container">
+        <a href="index.html" class="logo" aria-label="BOWLICIOUS Home">
+          <img
+            src="foto produk/logo-bowlicious.png"
+            alt="Logo BOWLICIOUS"
+            style="
+              height: 40px;
+              width: auto;
+              vertical-align: middle;
+              margin-right: 10px;
+            "
+          />
+          <span>BOWLICIOUS</span>
+        </a>
+        <button
+          class="menu-toggle"
+          id="mobile-menu"
+          aria-label="Buka menu"
+          aria-expanded="false"
+        >
+          <i class="fas fa-bars"></i>
+        </button>
+        <ul class="nav-menu" id="nav-menu">
+          <li><a href="index.html" class="nav-link">Home</a></li>
+          <li><a href="about.html" class="nav-link">About</a></li>
+          <li><a href="menu.html" class="nav-link active">Menu</a></li>
+          <li><a href="pemesanan.html" class="nav-link">Pemesanan</a></li>
+          <li><a href="testimoni.html" class="nav-link">Testimoni</a></li>
+          <li>
+            <a href="pemesanan.html" class="btn btn-primary nav-cta"
+              >Pesan Sekarang</a
+            >
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <header class="page-header">
+      <div class="container reveal">
+        <h1 class="section-title">MENU KAMI</h1>
+        <p class="page-lead">Pilihan mangkuk lezat untuk harimu.</p>
+      </div>
+    </header>
+
+    <section class="featured-section page-top" style="padding-top: 4rem">
+      <div class="container featured-grid">
+        <img
+          src="foto produk/signature-bowl.jpeg"
+          alt="Chicken Katsu Sambal Matah"
+          class="featured-img reveal"
+        />
+        <div class="reveal delay-1">
+          <h2 class="section-title">CHICKEN KATSU SAMBAL MATAH (SIGNATURE)</h2>
+
+          <p
+            class="product-desc"
+            style="font-size: 1.1rem; margin-bottom: 1rem; color: #eee"
+          >
+            Nikmati sensasi gurih dan pedas dalam satu suapan! Potongan ayam
+            katsu renyah berpadu dengan nasi hangat pulen, disiram limpahan
+            sambal matah khas Bali yang segar dan beraroma daun jeruk.
+          </p>
+          <h4 class="product-price">Rp14.000</h4>
+
+          <!-- Informasi Gizi -->
+          <div
+            class="nutrition-info"
+            style="
+              margin-top: 1.5rem;
+              padding: 1.5rem;
+              border: 1px solid #444;
+              border-radius: 8px;
+              background-color: #222;
+            "
+          >
+            <h5
+              style="
+                color: var(--color-orange);
+                margin-bottom: 1rem;
+                font-family: var(--font-heading);
+                letter-spacing: 1px;
+                font-size: 1.1rem;
+              "
+            >
+              Informasi Nilai Gizi (Estimasi per porsi)
+            </h5>
+            <ul
+              style="
+                list-style-type: none;
+                padding-left: 0;
+                font-size: 1rem;
+                color: #ccc;
+              "
+            >
+              <li
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  border-bottom: 1px solid #333;
+                  padding: 0.5rem 0;
+                "
+              >
+                <span>Kalori</span> <strong>± 550 kkal</strong>
+              </li>
+              <li
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  border-bottom: 1px solid #333;
+                  padding: 0.5rem 0;
+                "
+              >
+                <span>Protein</span> <strong>± 22 g</strong>
+              </li>
+              <li
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  border-bottom: 1px solid #333;
+                  padding: 0.5rem 0;
+                "
+              >
+                <span>Karbohidrat</span> <strong>± 65 g</strong>
+              </li>
+              <li
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  padding: 0.5rem 0;
+                "
+              >
+                <span>Lemak</span> <strong>± 18 g</strong>
+              </li>
+            </ul>
+            <small
+              style="
+                color: #888;
+                display: block;
+                margin-top: 1rem;
+                font-size: 0.85rem;
+              "
+              >*Kandungan gizi dapat bervariasi.</small
+            >
+          </div>
+
+          <a
+            href="pemesanan.html"
+            class="btn btn-primary"
+            style="margin-top: 2rem"
+            >PRE-ORDER SEKARANG</a
+          >
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="container footer-content">
+        <div class="footer-brand">
+          <h2>BOWLICIOUS</h2>
+          <p>Premium Modern Street Food.</p>
+        </div>
+        <div class="footer-links">
+          <h4>Menu</h4>
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="menu.html">Menu</a></li>
+            <li><a href="about.html">About</a></li>
+            <li><a href="testimoni.html">Testimoni</a></li>
+          </ul>
+        </div>
+        <div class="footer-contact">
+          <h4>Kontak Bisnis</h4>
+          <p><i class="fas fa-map-marker-alt"></i> (Alamat Anda)</p>
+          <p><i class="fab fa-whatsapp"></i> (0812xxxxxx)</p>
+          <p><i class="fab fa-instagram"></i> @bowlicious.id</p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>
+          &copy; <span id="currentYear"></span> BOWLICIOUS. All rights reserved.
+        </p>
+      </div>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>
