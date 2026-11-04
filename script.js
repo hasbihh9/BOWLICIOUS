@@ -86,7 +86,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!(qty >= 1)) ok = false;
             if (!ok) return;
 
-            // Integrasi Backend: Mengirim data ke proses_pemesanan.php
             const formData = new FormData();
             formData.append('name', name);
             formData.append('wa', wa);
@@ -94,7 +93,6 @@ document.addEventListener('DOMContentLoaded', () => {
             formData.append('date', dateInput.value);
             formData.append('notes', $('orderNotes').value.trim());
 
-            // Nonaktifkan tombol saat memproses untuk mencegah double submit
             const submitBtn = orderForm.querySelector('button[type="submit"]');
             submitBtn.disabled = true;
             feedback.textContent = 'Memproses pesanan...';
@@ -109,7 +107,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     feedback.className = 'feedback-msg feedback-success';
                     $('orderStatus').textContent = `Pesanan berhasil tercatat. Silakan klik tombol WA di bawah untuk konfirmasi.`;
 
-                    // Tambahkan tombol WA jika belum ada
                     const existingWaBtn = orderForm.querySelector('.fa-whatsapp');
                     if(!existingWaBtn) {
                         const waBtn = document.createElement('a');
@@ -120,7 +117,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         waBtn.innerHTML = '<i class="fab fa-whatsapp"></i> KONFIRMASI VIA WHATSAPP';
                         orderForm.appendChild(waBtn);
                     } else {
-                        // Jika sudah ada (dari pesanan sebelumnya), perbarui link-nya
                         existingWaBtn.parentElement.href = data.wa_link;
                     }
 
@@ -145,13 +141,12 @@ document.addEventListener('DOMContentLoaded', () => {
     /* ===== 3. TESTIMONI (hanya jika form ada) ===== */
     const reviewForm = $('reviewForm');
     if (reviewForm) {
-        let reviewsData = []; // Mengosongkan data dummy, akan diisi dari database
+        let reviewsData = [];
         const stars = (n) => Array.from({ length: 5 }, (_, i) => `<i class="${i < n ? 'fas' : 'far'} fa-star"></i>`).join('');
         const starInput = $('starInput').querySelectorAll('i');
         const ratingInput = $('reviewRating');
         const ratingError = $('ratingError');
 
-        // Fungsi mengambil data dari database
         const loadTestimonials = () => {
             fetch('get_testimoni.php')
             .then(res => res.json())
@@ -196,7 +191,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 reviewItems.innerHTML = "<p style='text-align:center; color:#888;'>Belum ada ulasan yang disetujui. Jadilah yang pertama!</p>";
                 return;
             }
-            // Sesuaikan variabel dengan output database (customer_name & message)
             reviewItems.innerHTML = reviewsData.map(r => `
                 <div class="review-card">
                     <div class="review-card-header"><span class="review-author">${esc(r.customer_name)}</span><span class="review-date">${esc(r.date)}</span></div>
@@ -204,7 +198,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     <p class="review-comment">${esc(r.message)}</p>
                 </div>`).join('');
             
-            // Sembunyikan badge info demo
             const badge = document.querySelector('.demo-badge');
             if(badge) badge.style.display = 'none';
         };
@@ -220,7 +213,6 @@ document.addEventListener('DOMContentLoaded', () => {
             submitBtn.disabled = true;
             submitBtn.textContent = 'MENGIRIM...';
 
-            // Kirim ke database
             const fd = new FormData();
             fd.append('name', name);
             fd.append('rating', ratingInput.value);
@@ -231,13 +223,12 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(data => {
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'KIRIM ULASAN';
-                alert(data.message); // Menampilkan pop-up sukses
+                alert(data.message); 
                 
                 if(data.status === 'success') {
                     reviewForm.reset();
                     ratingInput.value = '';
                     starInput.forEach(s => s.classList.remove('active'));
-                    // Kita tidak merender ulang list karena status ulasannya masih 'pending' di DB
                 }
             })
             .catch(err => {
@@ -247,7 +238,39 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // Panggil data asli saat halaman dimuat
         loadTestimonials();
+    }
+
+    /* ===== 4. TAMPILAN 3 ULASAN TERBAIK DI HOME ===== */
+    const homeReviewContainer = $('homeReviewItems');
+    if (homeReviewContainer) {
+        const stars = (n) => Array.from({ length: 5 }, (_, i) => `<i class="${i < n ? 'fas' : 'far'} fa-star" style="color: var(--color-orange);"></i>`).join('');
+        
+        fetch('get_testimoni.php')
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success' && data.data.length > 0) {
+                    // Filter rating 4 & 5, lalu ambil maksimal 3
+                    const topReviews = data.data.filter(r => parseInt(r.rating, 10) >= 4).slice(0, 3);
+                    
+                    if (topReviews.length > 0) {
+                        homeReviewContainer.innerHTML = topReviews.map(r => `
+                            <div style="background: var(--color-white); padding: 2rem; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); flex: 1; min-width: 280px; max-width: 350px; text-align: left; border-top: 4px solid var(--color-orange);">
+                                <div style="margin-bottom: 1rem; font-size: 1.2rem;">${stars(r.rating)}</div>
+                                <p style="font-size: 1rem; color: var(--color-dark-gray); margin-bottom: 1.5rem; font-style: italic; line-height: 1.6;">"${esc(r.message)}"</p>
+                                <h4 style="font-family: var(--font-heading); letter-spacing: 1px; margin: 0; color: var(--color-black);">- ${esc(r.customer_name)}</h4>
+                            </div>
+                        `).join('');
+                    } else {
+                        homeReviewContainer.innerHTML = "<p style='color: #888;'>Belum ada ulasan terbaik untuk ditampilkan.</p>";
+                    }
+                } else {
+                    homeReviewContainer.innerHTML = "<p style='color: #888;'>Belum ada ulasan.</p>";
+                }
+            })
+            .catch(err => {
+                console.error("Gagal memuat ulasan home:", err);
+                homeReviewContainer.innerHTML = "<p style='color: #888;'>Gagal memuat data ulasan.</p>";
+            });
     }
 });
