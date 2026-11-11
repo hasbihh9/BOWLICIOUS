@@ -9,7 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $qty = (int)($_POST['qty'] ?? 0);
     $date = $_POST['date'] ?? '';
     $notes = trim($_POST['notes'] ?? '');
-    $product_id = 1; // Mengacu pada produk utama di database
+    $product_id = 1; 
 
     if(empty($name) || empty($wa) || $qty <= 0 || empty($date)) {
         echo json_encode(["status" => "error", "message" => "Data wajib tidak lengkap atau tidak valid."]);
@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pdo->commit();
 
         // 3. Konfigurasi WhatsApp
-        $waBisnis = "6285122949124"; // Ganti dengan nomor asli
+        $waBisnis = "6285782419964";
         $pesanWA = "Halo BOWLICIOUS,\nSaya ingin mengonfirmasi pesanan saya:\n\n*Kode:* $order_code\n*Nama:* $name\n*Pesanan:* {$product['name']} ($qty porsi)\n*Tanggal:* $date\n*Total:* Rp" . number_format($total_price, 0, ',', '.') . "\n\nPembayaran akan saya lakukan saat pengambilan. Mohon konfirmasinya.";
         
         $wa_link = "https://wa.me/$waBisnis?text=" . urlencode($pesanWA);

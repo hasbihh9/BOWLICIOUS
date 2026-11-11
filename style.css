@@ -711,9 +711,9 @@ footer {
 
 @media screen and (max-width: 768px) {
     #hero-video {
-        display: none !important; /* Menyembunyikan video di layar HP */
+        display: none !important;
     }
     .hero-section {
-        background: url('vd/spider\ man.jpg') center/cover no-repeat; /*gambar pengganti */
+        background: url('vd/bg\ bumbu.jpg') center/cover no-repeat; /*gambar pengganti */
     }
 }

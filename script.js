@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    /* ===== UTIL ===== */
     const $ = (id) => document.getElementById(id);
     const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const localISO = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -37,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const yearEl = $('currentYear');
     if (yearEl) yearEl.textContent = new Date().getFullYear();
 
-    /* ===== 2. PEMESANAN (hanya jika form ada) ===== */
+    /* ===== 2. PEMESANAN  ===== */
     const orderForm = $('orderForm');
     if (orderForm) {
         const basePrice = parseInt($('product-price').dataset.price, 10);
@@ -138,7 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
         refresh();
     }
 
-    /* ===== 3. TESTIMONI (hanya jika form ada) ===== */
+    /* ===== 3. TESTIMONI ===== */
     const reviewForm = $('reviewForm');
     if (reviewForm) {
         let reviewsData = [];
@@ -241,7 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loadTestimonials();
     }
 
-    /* ===== 4. TAMPILAN 3 ULASAN TERBAIK DI HOME ===== */
+    /* tampilan ulasan 3 terbaik */
     const homeReviewContainer = $('homeReviewItems');
     if (homeReviewContainer) {
         const stars = (n) => Array.from({ length: 5 }, (_, i) => `<i class="${i < n ? 'fas' : 'far'} fa-star" style="color: var(--color-orange);"></i>`).join('');
@@ -250,7 +249,6 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'success' && data.data.length > 0) {
-                    // Filter rating 4 & 5, lalu ambil maksimal 3
                     const topReviews = data.data.filter(r => parseInt(r.rating, 10) >= 4).slice(0, 3);
                     
                     if (topReviews.length > 0) {
