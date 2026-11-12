@@ -205,6 +205,10 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const name = $('reviewerName').value.trim();
             const comment = $('reviewComment').value.trim();
+            
+            const hideNameCheckbox = $('hideName');
+            const isAnonymous = (hideNameCheckbox && hideNameCheckbox.checked) ? 1 : 0;
+
             if (!ratingInput.value) { ratingError.style.display = 'block'; return; }
             if (!name || !comment) { reviewForm.reportValidity(); return; }
 
@@ -216,6 +220,7 @@ document.addEventListener('DOMContentLoaded', () => {
             fd.append('name', name);
             fd.append('rating', ratingInput.value);
             fd.append('comment', comment);
+            fd.append('is_anonymous', isAnonymous);
 
             fetch('proses_testimoni.php', { method: 'POST', body: fd })
             .then(res => res.json())
@@ -228,6 +233,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     reviewForm.reset();
                     ratingInput.value = '';
                     starInput.forEach(s => s.classList.remove('active'));
+                    if (hideNameCheckbox) hideNameCheckbox.checked = false; // Reset centang
+                    
+                    loadTestimonials(); 
                 }
             })
             .catch(err => {
