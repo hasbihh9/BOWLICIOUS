@@ -2,7 +2,10 @@
 // admin.php
 session_start();
 
-$admin_password = "admin";
+// ==========================================
+// 1. PENGATURAN PASSWORD ADMIN
+// ==========================================
+$admin_password = "admin"; // Silakan ganti password ini sesuai keinginan Anda
 
 // Proses Logout
 if (isset($_GET['logout'])) {
@@ -23,7 +26,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['password'])) {
     }
 }
 
-// halaman login jika belum login
+// ==========================================
+// 2. HALAMAN LOGIN (Jika belum login)
+// ==========================================
 if (!isset($_SESSION['is_admin_logged_in']) || $_SESSION['is_admin_logged_in'] !== true) {
 ?>
     <!DOCTYPE html>
@@ -31,7 +36,7 @@ if (!isset($_SESSION['is_admin_logged_in']) || $_SESSION['is_admin_logged_in'] !
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="shortcut icon" href="foto_produk/logo-bowlicious.png" type="image/x-icon" />
+        <link rel="shortcut icon" href="foto produk/logo-bowlicious.png" type="image/x-icon" />
         <title>Login Admin | BOWLICIOUS</title>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -88,47 +93,186 @@ if (!isset($_SESSION['is_admin_logged_in']) || $_SESSION['is_admin_logged_in'] !
     exit;
 }
 
-// proses ubah pesanan
+// ==========================================
+// 3. PROSES UBAH STATUS PESANAN
+// ==========================================
 require 'koneksi.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
     $order_id = $_POST['order_id'];
     $new_status = $_POST['status'];
     
+    // Pertahankan query string filter (bulan & pelanggan) setelah update status
+    $redirect_query = $_SERVER['QUERY_STRING'] ? '?' . $_SERVER['QUERY_STRING'] : '';
+    
     try {
         $stmtUpdate = $pdo->prepare("UPDATE orders SET status = ? WHERE id = ?");
         $stmtUpdate->execute([$new_status, $order_id]);
-        // Refresh halaman agar data terbaru langsung muncul
-        header("Location: admin.php");
+        header("Location: admin.php" . $redirect_query);
         exit;
     } catch (Exception $e) {
         echo "<script>alert('Gagal memperbarui status!');</script>";
     }
 }
 
-// panel admin
+// ==========================================
+// 4. LOGIKA FILTER & PENGAMBILAN DATA
+// ==========================================
+$filter_bulan = trim($_GET['bulan'] ?? '');
+$filter_pelanggan = trim($_GET['pelanggan'] ?? '');
+
+$conditions = [];
+$params = [];
+
+if ($filter_bulan !== '') {
+    $conditions[] = "DATE_FORMAT(o.created_at, '%Y-%m') = :bulan";
+    $params[':bulan'] = $filter_bulan;
+}
+
+if ($filter_pelanggan !== '') {
+    $conditions[] = "o.customer_name LIKE :pelanggan";
+    $params[':pelanggan'] = '%' . $filter_pelanggan . '%';
+}
+
+$where_sql = '';
+if (count($conditions) > 0) {
+    $where_sql = 'WHERE ' . implode(' AND ', $conditions);
+}
+
 try {
-    $stmt = $pdo->query("
+    $sql = "
         SELECT o.id AS order_id, o.order_code, o.customer_name, o.whatsapp_number, o.pickup_date, o.total_price, o.notes, o.status,
                o.created_at, p.name AS product_name, oi.quantity
         FROM orders o
         JOIN order_items oi ON o.id = oi.order_id
         JOIN products p ON oi.product_id = p.id
+        $where_sql
         ORDER BY o.created_at DESC
-    ");
+    ";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
     $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
     die("Gagal mengambil data: " . $e->getMessage());
 }
+
+// Hitung Total Keseluruhan Harga & Total Porsi (mengecualikan yang dibatalkan)
+$total_keseluruhan = 0;
+$total_porsi = 0;
+foreach ($orders as $item) {
+    if ($item['status'] !== 'dibatalkan') {
+        $total_keseluruhan += (float)$item['total_price'];
+        $total_porsi += (int)$item['quantity'];
+    }
+}
+
+// ==========================================
+// 5. PROSES EXPORT KE EXCEL (.xls)
+// ==========================================
+if (isset($_GET['export']) && $_GET['export'] === 'excel') {
+    $label_bulan = $filter_bulan !== '' ? '_' . $filter_bulan : '_Semua_Waktu';
+    $filename = "Laporan_Pesanan_BOWLICIOUS" . $label_bulan . "_" . date('Ymd') . ".xls";
+
+    header("Content-Type: application/vnd.ms-excel; charset=utf-8");
+    header("Content-Disposition: attachment; filename=\"$filename\"");
+    header("Pragma: no-cache");
+    header("Expires: 0");
+
+    $status_labels = [
+        'menunggu_konfirmasi' => 'Menunggu Konfirmasi',
+        'dikonfirmasi' => 'Dikonfirmasi',
+        'selesai' => 'Selesai',
+        'dibatalkan' => 'Dibatalkan'
+    ];
+
+    $grand_total = 0;
+    ?>
+    <html xmlns:x="urn:schemas-microsoft-com:office:excel">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    </head>
+    <body>
+        <table border="1">
+            <thead>
+                <tr>
+                    <th colspan="11" style="font-size: 16px; font-weight: bold; background-color: #F28C38; color: #FFFFFF; height: 35px;">
+                        LAPORAN DATA PESANAN - BOWLICIOUS
+                    </th>
+                </tr>
+                <tr>
+                    <th colspan="11" style="font-size: 12px; background-color: #F5F1E8; text-align: left;">
+                        Periode: <?= $filter_bulan !== '' ? date('F Y', strtotime($filter_bulan . '-01')) : 'Semua Bulan' ?>
+                        <?= $filter_pelanggan !== '' ? ' | Filter Pelanggan: ' . htmlspecialchars($filter_pelanggan) : '' ?>
+                        | Dicetak pada: <?= date('d/m/Y H:i') ?>
+                    </th>
+                </tr>
+                <tr style="background-color: #191919; color: #FFFFFF; font-weight: bold;">
+                    <th>No</th>
+                    <th>Kode Pesanan</th>
+                    <th>Waktu Pesan</th>
+                    <th>Nama Pelanggan</th>
+                    <th>Nomor WhatsApp</th>
+                    <th>Menu Pesanan</th>
+                    <th>Jumlah (Porsi)</th>
+                    <th>Tanggal Pengambilan</th>
+                    <th>Catatan</th>
+                    <th>Total Harga (Rp)</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (count($orders) > 0): ?>
+                    <?php $no = 1; foreach ($orders as $row): ?>
+                        <?php 
+                            if ($row['status'] !== 'dibatalkan') {
+                                $grand_total += (float)$row['total_price'];
+                            }
+                        ?>
+                        <tr>
+                            <td align="center"><?= $no++ ?></td>
+                            <td><?= htmlspecialchars($row['order_code']) ?></td>
+                            <td><?= date('d/m/Y H:i', strtotime($row['created_at'])) ?></td>
+                            <td><?= htmlspecialchars($row['customer_name']) ?></td>
+                            <td style="mso-number-format:'\@';"><?= htmlspecialchars($row['whatsapp_number']) ?></td>
+                            <td><?= htmlspecialchars($row['product_name']) ?></td>
+                            <td align="center"><?= (int)$row['quantity'] ?></td>
+                            <td><?= date('d/m/Y', strtotime($row['pickup_date'])) ?></td>
+                            <td><?= htmlspecialchars($row['notes'] ?: '-') ?></td>
+                            <td align="right"><?= (float)$row['total_price'] ?></td>
+                            <td><?= $status_labels[$row['status']] ?? $row['status'] ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                    <tr style="font-weight: bold; background-color: #FFF3CD;">
+                        <td colspan="9" align="right">TOTAL KESELURUHAN HARGA (Pesanan Aktif/Selesai):</td>
+                        <td align="right"><?= $grand_total ?></td>
+                        <td></td>
+                    </tr>
+                <?php else: ?>
+                    <tr>
+                        <td colspan="11" align="center">Tidak ada data pesanan.</td>
+                    </tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </body>
+    </html>
+    <?php
+    exit;
+}
+
+// Bangun URL untuk tombol Export agar mempertahankan filter yang sedang aktif
+$export_params = $_GET;
+$export_params['export'] = 'excel';
+$export_url = 'admin.php?' . http_build_query($export_params);
 ?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="shortcut icon" href="foto_produk/logo-bowlicious.png" type="image/x-icon" />
+    <link rel="shortcut icon" href="foto produk/logo-bowlicious.png" type="image/x-icon" />
     <title>Admin Dashboard | BOWLICIOUS</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -139,22 +283,183 @@ try {
         }
         body { font-family: 'Inter', sans-serif; background-color: var(--color-cream); margin: 0; padding: 2rem; color: var(--color-black); }
         .admin-container { max-width: 1300px; margin: 0 auto; background: var(--color-white); padding: 2.5rem; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 3px solid var(--color-orange); padding-bottom: 1.5rem; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 3px solid var(--color-orange); padding-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
         .header-title { display: flex; align-items: center; gap: 15px; }
         .header-title i { font-size: 2rem; color: var(--color-orange); }
         h1 { font-family: 'Oswald', sans-serif; margin: 0; font-size: 2.2rem; letter-spacing: 1px; }
-        .header-actions { display: flex; gap: 10px; }
-        .btn-action { color: var(--color-white); text-decoration: none; padding: 0.8rem 1.2rem; border-radius: 6px; font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s ease; font-size: 0.9rem;}
+        .header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+        .btn-action { color: var(--color-white); text-decoration: none; padding: 0.8rem 1.2rem; border-radius: 6px; font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s ease; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 6px; }
+        .btn-excel { background: #1D6F42; }
+        .btn-excel:hover { background: #155331; }
         .btn-home { background: var(--color-black); }
         .btn-home:hover { background: #333; }
         .btn-logout { background: #dc3545; }
         .btn-logout:hover { background: #c82333; }
+
+        /* Kartu Ringkasan Total */
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .summary-card {
+            background: #f9f8f6;
+            border: 1px solid #e5e0d8;
+            border-left: 5px solid var(--color-orange);
+            padding: 1.1rem 1.4rem;
+            border-radius: 8px;
+        }
+        .summary-card.highlight {
+            background: var(--color-black);
+            color: var(--color-white);
+            border-color: var(--color-black);
+            border-left: 5px solid var(--color-orange);
+        }
+        .summary-card span {
+            display: block;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            opacity: 0.8;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+        .summary-card strong {
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.7rem;
+            letter-spacing: 0.5px;
+        }
+        .summary-card.highlight strong {
+            color: var(--color-orange);
+        }
+
+        /* Styling Bar Filter & Pencarian */
+        .filter-bar {
+            background-color: #f9f8f6;
+            border: 1px solid #e5e0d8;
+            padding: 1.2rem 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            gap: 1rem;
+        }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex: 1;
+            min-width: 200px;
+        }
+        .filter-group label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #555;
+            letter-spacing: 0.5px;
+        }
+        .filter-group input {
+            padding: 0.65rem 0.9rem;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            background: var(--color-white);
+        }
+        .filter-group input:focus {
+            outline: none;
+            border-color: var(--color-orange);
+        }
+        .filter-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        .btn-filter {
+            background: var(--color-orange);
+            color: var(--color-white);
+            border: none;
+            padding: 0.7rem 1.3rem;
+            border-radius: 6px;
+            font-family: 'Oswald', sans-serif;
+            font-size: 0.95rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-filter:hover { background: #d9772a; }
+        .btn-reset {
+            background: #6c757d;
+            color: var(--color-white);
+            text-decoration: none;
+            padding: 0.7rem 1.1rem;
+            border-radius: 6px;
+            font-family: 'Oswald', sans-serif;
+            font-size: 0.95rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-reset:hover { background: #5a6268; }
+        .filter-info {
+            font-size: 0.9rem;
+            color: #555;
+            margin-bottom: 0.8rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
         .table-responsive { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.95rem; }
+        table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; font-size: 0.95rem; }
         th, td { padding: 1.2rem 1rem; text-align: left; border-bottom: 1px solid #eee; vertical-align: middle; }
         th { background-color: var(--color-black); color: var(--color-white); font-weight: 500; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px; white-space: nowrap; }
-        tr:hover { background-color: #fcfcfc; }
-        .badge-qty { background: var(--color-orange); color: var(--color-white); padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; margin-left: 8px; }
+        tbody tr:hover { background-color: #fcfcfc; }
+
+        /* Baris Total Keseluruhan di Bawah Tabel */
+        tfoot tr {
+            background-color: #FFF3CD;
+            border-top: 2px solid var(--color-orange);
+        }
+        tfoot td {
+            padding: 1.2rem 1rem;
+            font-weight: 700;
+            color: var(--color-black);
+            border-bottom: none;
+        }
+        .grand-total-label {
+            text-align: right;
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.1rem;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .grand-total-value {
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.35rem;
+            color: #d9772a;
+            white-space: nowrap;
+        }
+
+        .badge-qty { 
+            background: var(--color-orange); 
+            color: var(--color-white); 
+            padding: 4px 10px; 
+            border-radius: 20px; 
+            font-size: 0.8rem; 
+            font-weight: 600; 
+            display: inline-block;
+            white-space: nowrap;
+            margin-top: 4px;
+        }
         .notes-text { color: #666; font-style: italic; font-size: 0.85rem; max-width: 200px; }
         .wa-link { color: #25D366; text-decoration: none; font-weight: 600; display: flex; align-items: center; gap: 5px; }
         .wa-link:hover { text-decoration: underline; }
@@ -170,9 +475,56 @@ try {
                 <h1>PANEL ADMIN PESANAN</h1>
             </div>
             <div class="header-actions">
+                <a href="<?= htmlspecialchars($export_url) ?>" class="btn-action btn-excel"><i class="fas fa-file-excel"></i> Export Excel</a>
                 <a href="index.html" class="btn-action btn-home" target="_blank"><i class="fas fa-external-link-alt"></i> Lihat Web</a>
                 <a href="admin.php?logout=1" class="btn-action btn-logout"><i class="fas fa-sign-out-alt"></i> Keluar</a>
             </div>
+        </div>
+
+        <!-- Ringkasan Total Pesanan & Pendapatan -->
+        <div class="summary-cards">
+            <div class="summary-card">
+                <span><i class="fas fa-receipt"></i> Jumlah Transaksi</span>
+                <strong><?= count($orders) ?> Pesanan</strong>
+            </div>
+            <div class="summary-card">
+                <span><i class="fas fa-bowl-rice"></i> Total Porsi Terjual</span>
+                <strong><?= $total_porsi ?> Porsi</strong>
+            </div>
+            <div class="summary-card highlight">
+                <span><i class="fas fa-wallet"></i> Total Keseluruhan Harga</span>
+                <strong>Rp<?= number_format($total_keseluruhan, 0, ',', '.') ?></strong>
+            </div>
+        </div>
+
+        <!-- Form Filter Per Bulan & Pencarian Pelanggan -->
+        <form method="GET" action="admin.php" class="filter-bar">
+            <div class="filter-group">
+                <label for="pelanggan"><i class="fas fa-search"></i> Cari Nama Pelanggan</label>
+                <input type="text" id="pelanggan" name="pelanggan" value="<?= htmlspecialchars($filter_pelanggan) ?>" placeholder="Ketik nama pelanggan...">
+            </div>
+            <div class="filter-group">
+                <label for="bulan"><i class="fas fa-calendar-alt"></i> Filter Per Bulan</label>
+                <input type="month" id="bulan" name="bulan" value="<?= htmlspecialchars($filter_bulan) ?>">
+            </div>
+            <div class="filter-buttons">
+                <button type="submit" class="btn-filter"><i class="fas fa-filter"></i> Terapkan</button>
+                <?php if ($filter_bulan !== '' || $filter_pelanggan !== ''): ?>
+                    <a href="admin.php" class="btn-reset"><i class="fas fa-times"></i> Reset</a>
+                <?php endif; ?>
+            </div>
+        </form>
+
+        <div class="filter-info">
+            <span>
+                Menampilkan <strong><?= count($orders) ?></strong> pesanan
+                <?php if ($filter_pelanggan !== ''): ?>
+                    untuk pelanggan <strong>"<?= htmlspecialchars($filter_pelanggan) ?>"</strong>
+                <?php endif; ?>
+                <?php if ($filter_bulan !== ''): ?>
+                    pada bulan <strong><?= date('F Y', strtotime($filter_bulan . '-01')) ?></strong>
+                <?php endif; ?>
+            </span>
         </div>
 
         <?php if (count($orders) > 0): ?>
@@ -223,12 +575,22 @@ try {
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="7" class="grand-total-label">
+                                Total Keseluruhan Harga (<?= $total_porsi ?> Porsi Aktif/Selesai):
+                            </td>
+                            <td colspan="2" class="grand-total-value">
+                                Rp<?= number_format($total_keseluruhan, 0, ',', '.') ?>
+                            </td>
+                        </tr>
+                    </tfoot>
                 </table>
             </div>
         <?php else: ?>
             <div style="text-align: center; padding: 4rem 2rem;">
-                <i class="fas fa-inbox" style="font-size: 4rem; color: #ccc; margin-bottom: 1rem;"></i>
-                <h3 style="color: #777; font-family: 'Inter', sans-serif;">Belum ada pesanan yang masuk.</h3>
+                <i class="fas fa-search" style="font-size: 3.5rem; color: #ccc; margin-bottom: 1rem;"></i>
+                <h3 style="color: #777; font-family: 'Inter', sans-serif;">Tidak ada pesanan yang sesuai dengan pencarian/filter.</h3>
             </div>
         <?php endif; ?>
     </div>
