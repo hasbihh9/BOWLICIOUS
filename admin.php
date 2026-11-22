@@ -1,33 +1,51 @@
 <?php
 // admin.php
 session_start();
+require 'koneksi.php';
 
 // ==========================================
-// 1. PENGATURAN PASSWORD ADMIN
+// 1. PROSES LOGOUT
 // ==========================================
-$admin_password = "admin"; // Silakan ganti password ini sesuai keinginan Anda
-
-// Proses Logout
 if (isset($_GET['logout'])) {
     session_destroy();
     header("Location: admin.php");
     exit;
 }
 
-// Proses Login
+// ==========================================
+// 2. PROSES LOGIN DARI DATABASE
+// ==========================================
 $error_msg = '';
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['password'])) {
-    if ($_POST['password'] === $admin_password) {
-        $_SESSION['is_admin_logged_in'] = true;
-        header("Location: admin.php");
-        exit;
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'login') {
+    $username = trim($_POST['username'] ?? '');
+    $password = $_POST['password'] ?? '';
+
+    if ($username === '' || $password === '') {
+        $error_msg = "Username dan kata sandi wajib diisi.";
     } else {
-        $error_msg = "Kata sandi salah. Silakan coba lagi.";
+        try {
+            $stmtUser = $pdo->prepare("SELECT id, username, password FROM admins WHERE username = ? LIMIT 1");
+            $stmtUser->execute([$username]);
+            $admin = $stmtUser->fetch(PDO::FETCH_ASSOC);
+
+            if ($admin && password_verify($password, $admin['password'])) {
+                session_regenerate_id(true);
+                $_SESSION['is_admin_logged_in'] = true;
+                $_SESSION['admin_id'] = $admin['id'];
+                $_SESSION['admin_username'] = $admin['username'];
+                header("Location: admin.php");
+                exit;
+            } else {
+                $error_msg = "Username atau kata sandi salah.";
+            }
+        } catch (Exception $e) {
+            $error_msg = "Terjadi kesalahan koneksi database.";
+        }
     }
 }
 
 // ==========================================
-// 2. HALAMAN LOGIN (Jika belum login)
+// 3. HALAMAN LOGIN (Jika belum login)
 // ==========================================
 if (!isset($_SESSION['is_admin_logged_in']) || $_SESSION['is_admin_logged_in'] !== true) {
 ?>
@@ -45,30 +63,37 @@ if (!isset($_SESSION['is_admin_logged_in']) || $_SESSION['is_admin_logged_in'] !
             .login-box { background: #FFFFFF; color: #191919; padding: 3rem; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; }
             .login-box h2 { font-family: 'Oswald', sans-serif; font-size: 2rem; margin-bottom: 0.5rem; color: #F28C38; letter-spacing: 1px; }
             .login-box p { color: #666; margin-bottom: 2rem; font-size: 0.95rem; }
-            .form-group { text-align: left; margin-bottom: 1.5rem; }
+            .form-group { text-align: left; margin-bottom: 1.25rem; }
             .form-group label { display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem; }
+            .form-group input[type="text"],
+            .password-wrapper input { width: 100%; padding: 0.8rem; border: 1px solid #ccc; border-radius: 6px; font-family: 'Inter', sans-serif; font-size: 1rem; box-sizing: border-box; }
             .password-wrapper { position: relative; }
-            .password-wrapper input { width: 100%; padding: 0.8rem 2.8rem 0.8rem 0.8rem; border: 1px solid #ccc; border-radius: 6px; font-family: 'Inter', sans-serif; font-size: 1rem; box-sizing: border-box; }
-            .password-wrapper input:focus { outline: none; border-color: #F28C38; }
+            .password-wrapper input { padding-right: 2.8rem; }
+            .form-group input:focus { outline: none; border-color: #F28C38; }
             .toggle-password { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #888; font-size: 1.05rem; transition: 0.2s; }
             .toggle-password:hover { color: #F28C38; }
-            .btn-login { background: #F28C38; color: #fff; border: none; padding: 0.8rem; width: 100%; border-radius: 6px; font-family: 'Oswald', sans-serif; font-size: 1.1rem; cursor: pointer; transition: 0.3s; letter-spacing: 1px; }
+            .btn-login { background: #F28C38; color: #fff; border: none; padding: 0.85rem; width: 100%; border-radius: 6px; font-family: 'Oswald', sans-serif; font-size: 1.1rem; cursor: pointer; transition: 0.3s; letter-spacing: 1px; margin-top: 0.5rem; }
             .btn-login:hover { background: #d9772a; }
-            .error { color: #dc3545; font-size: 0.85rem; margin-bottom: 1rem; background: #ffe6e6; padding: 8px; border-radius: 4px; border-left: 4px solid #dc3545; text-align: left;}
+            .error { color: #dc3545; font-size: 0.85rem; margin-bottom: 1rem; background: #ffe6e6; padding: 10px; border-radius: 4px; border-left: 4px solid #dc3545; text-align: left; }
         </style>
     </head>
     <body>
         <div class="login-box">
             <h2>BOWLICIOUS ADMIN</h2>
-            <p>Masukkan kata sandi untuk mengakses data.</p>
+            <p>Masuk menggunakan akun administrator.</p>
             <?php if ($error_msg): ?>
-                <div class="error"><i class="fas fa-exclamation-circle"></i> <?= $error_msg ?></div>
+                <div class="error"><i class="fas fa-exclamation-circle"></i> <?= htmlspecialchars($error_msg) ?></div>
             <?php endif; ?>
             <form method="POST" action="">
+                <input type="hidden" name="action" value="login">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required autofocus placeholder="Masukkan username" value="<?= htmlspecialchars($_POST['username'] ?? '') ?>">
+                </div>
                 <div class="form-group">
                     <label for="password">Kata Sandi</label>
                     <div class="password-wrapper">
-                        <input type="password" id="password" name="password" required autofocus placeholder="••••••••">
+                        <input type="password" id="password" name="password" required placeholder="••••••••">
                         <i class="fas fa-eye toggle-password" id="togglePassword" title="Lihat/Sembunyikan Sandi"></i>
                     </div>
                 </div>
@@ -94,15 +119,57 @@ if (!isset($_SESSION['is_admin_logged_in']) || $_SESSION['is_admin_logged_in'] !
 }
 
 // ==========================================
-// 3. PROSES UBAH STATUS PESANAN
+// 4. PROSES GANTI KATA SANDI ADMIN
 // ==========================================
-require 'koneksi.php';
+$pw_alert = '';
+$pw_alert_type = '';
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'change_password') {
+    $old_pw = $_POST['old_password'] ?? '';
+    $new_pw = $_POST['new_password'] ?? '';
+    $confirm_pw = $_POST['confirm_password'] ?? '';
+    $admin_id = $_SESSION['admin_id'] ?? 0;
+
+    if ($old_pw === '' || $new_pw === '' || $confirm_pw === '') {
+        $pw_alert = "Semua kolom kata sandi wajib diisi.";
+        $pw_alert_type = "error";
+    } elseif (strlen($new_pw) < 6) {
+        $pw_alert = "Kata sandi baru minimal harus 6 karakter.";
+        $pw_alert_type = "error";
+    } elseif ($new_pw !== $confirm_pw) {
+        $pw_alert = "Konfirmasi kata sandi baru tidak cocok.";
+        $pw_alert_type = "error";
+    } else {
+        try {
+            $stmtCheck = $pdo->prepare("SELECT password FROM admins WHERE id = ?");
+            $stmtCheck->execute([$admin_id]);
+            $currentAdmin = $stmtCheck->fetch(PDO::FETCH_ASSOC);
+
+            if ($currentAdmin && password_verify($old_pw, $currentAdmin['password'])) {
+                $hashedNewPw = password_hash($new_pw, PASSWORD_DEFAULT);
+                $stmtUpdPw = $pdo->prepare("UPDATE admins SET password = ? WHERE id = ?");
+                $stmtUpdPw->execute([$hashedNewPw, $admin_id]);
+
+                $pw_alert = "Kata sandi berhasil diperbarui dan terenkripsi di database!";
+                $pw_alert_type = "success";
+            } else {
+                $pw_alert = "Kata sandi lama Anda salah.";
+                $pw_alert_type = "error";
+            }
+        } catch (Exception $e) {
+            $pw_alert = "Gagal memperbarui kata sandi: " . $e->getMessage();
+            $pw_alert_type = "error";
+        }
+    }
+}
+
+// ==========================================
+// 5. PROSES UBAH STATUS PESANAN
+// ==========================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
     $order_id = $_POST['order_id'];
     $new_status = $_POST['status'];
     
-    // Pertahankan query string filter (bulan & pelanggan) setelah update status
     $redirect_query = $_SERVER['QUERY_STRING'] ? '?' . $_SERVER['QUERY_STRING'] : '';
     
     try {
@@ -116,7 +183,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
 }
 
 // ==========================================
-// 4. LOGIKA FILTER & PENGAMBILAN DATA
+// 6. LOGIKA FILTER & PENGAMBILAN DATA
 // ==========================================
 $filter_bulan = trim($_GET['bulan'] ?? '');
 $filter_pelanggan = trim($_GET['pelanggan'] ?? '');
@@ -167,7 +234,7 @@ foreach ($orders as $item) {
 }
 
 // ==========================================
-// 5. PROSES EXPORT KE EXCEL (.xls)
+// 7. PROSES EXPORT KE EXCEL (.xls)
 // ==========================================
 if (isset($_GET['export']) && $_GET['export'] === 'excel') {
     $label_bulan = $filter_bulan !== '' ? '_' . $filter_bulan : '_Semua_Waktu';
@@ -260,7 +327,6 @@ if (isset($_GET['export']) && $_GET['export'] === 'excel') {
     exit;
 }
 
-// Bangun URL untuk tombol Export agar mempertahankan filter yang sedang aktif
 $export_params = $_GET;
 $export_params['export'] = 'excel';
 $export_url = 'admin.php?' . http_build_query($export_params);
@@ -287,14 +353,31 @@ $export_url = 'admin.php?' . http_build_query($export_params);
         .header-title { display: flex; align-items: center; gap: 15px; }
         .header-title i { font-size: 2rem; color: var(--color-orange); }
         h1 { font-family: 'Oswald', sans-serif; margin: 0; font-size: 2.2rem; letter-spacing: 1px; }
+        .admin-badge { font-size: 0.85rem; color: #666; margin-top: 2px; }
         .header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
-        .btn-action { color: var(--color-white); text-decoration: none; padding: 0.8rem 1.2rem; border-radius: 6px; font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s ease; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 6px; }
+        .btn-action { color: var(--color-white); text-decoration: none; padding: 0.8rem 1.2rem; border-radius: 6px; font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s ease; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 6px; border: none; cursor: pointer; }
         .btn-excel { background: #1D6F42; }
         .btn-excel:hover { background: #155331; }
+        .btn-pw { background: #495057; }
+        .btn-pw:hover { background: #343a40; }
         .btn-home { background: var(--color-black); }
         .btn-home:hover { background: #333; }
         .btn-logout { background: #dc3545; }
         .btn-logout:hover { background: #c82333; }
+
+        /* Notifikasi Ganti Password */
+        .alert-banner {
+            padding: 1rem 1.2rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .alert-success { background: #d4edda; color: #155724; border-left: 5px solid #28a745; }
+        .alert-error { background: #f8d7da; color: #721c24; border-left: 5px solid #dc3545; }
 
         /* Kartu Ringkasan Total */
         .summary-cards {
@@ -424,7 +507,6 @@ $export_url = 'admin.php?' . http_build_query($export_params);
         th { background-color: var(--color-black); color: var(--color-white); font-weight: 500; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px; white-space: nowrap; }
         tbody tr:hover { background-color: #fcfcfc; }
 
-        /* Baris Total Keseluruhan di Bawah Tabel */
         tfoot tr {
             background-color: #FFF3CD;
             border-top: 2px solid var(--color-orange);
@@ -465,6 +547,76 @@ $export_url = 'admin.php?' . http_build_query($export_params);
         .wa-link:hover { text-decoration: underline; }
         .status-select { padding: 6px; border-radius: 4px; border: 1px solid #ccc; font-family: 'Inter', sans-serif; font-size: 0.85rem; font-weight: 600; cursor: pointer; outline: none; }
         .status-select:focus { border-color: var(--color-orange); }
+
+        /* Modal Ganti Password */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.65);
+            z-index: 999;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-card {
+            background: #fff;
+            width: 100%;
+            max-width: 420px;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--color-orange);
+            padding-bottom: 0.8rem;
+            margin-bottom: 1.5rem;
+        }
+        .modal-header h3 {
+            font-family: 'Oswald', sans-serif;
+            margin: 0;
+            font-size: 1.4rem;
+            letter-spacing: 0.5px;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            cursor: pointer;
+            color: #777;
+        }
+        .modal-close:hover { color: #191919; }
+        .modal-group { margin-bottom: 1rem; }
+        .modal-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; }
+        .modal-group input {
+            width: 100%;
+            padding: 0.7rem 0.9rem;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            box-sizing: border-box;
+        }
+        .modal-group input:focus { outline: none; border-color: var(--color-orange); }
+        .btn-save-pw {
+            width: 100%;
+            background: var(--color-orange);
+            color: #fff;
+            border: none;
+            padding: 0.8rem;
+            border-radius: 6px;
+            font-family: 'Oswald', sans-serif;
+            font-size: 1rem;
+            letter-spacing: 1px;
+            cursor: pointer;
+            margin-top: 0.5rem;
+        }
+        .btn-save-pw:hover { background: #d9772a; }
     </style>
 </head>
 <body>
@@ -472,14 +624,25 @@ $export_url = 'admin.php?' . http_build_query($export_params);
         <div class="header">
             <div class="header-title">
                 <i class="fas fa-clipboard-list"></i>
-                <h1>PANEL ADMIN PESANAN</h1>
+                <div>
+                    <h1>PANEL ADMIN PESANAN</h1>
+                    <div class="admin-badge">Login sebagai: <strong><?= htmlspecialchars($_SESSION['admin_username'] ?? 'admin') ?></strong> (Terhubung Database)</div>
+                </div>
             </div>
             <div class="header-actions">
                 <a href="<?= htmlspecialchars($export_url) ?>" class="btn-action btn-excel"><i class="fas fa-file-excel"></i> Export Excel</a>
+                <button type="button" class="btn-action btn-pw" id="openPwModal"><i class="fas fa-key"></i> Ubah Sandi</button>
                 <a href="index.html" class="btn-action btn-home" target="_blank"><i class="fas fa-external-link-alt"></i> Lihat Web</a>
                 <a href="admin.php?logout=1" class="btn-action btn-logout"><i class="fas fa-sign-out-alt"></i> Keluar</a>
             </div>
         </div>
+
+        <?php if ($pw_alert !== ''): ?>
+            <div class="alert-banner <?= $pw_alert_type === 'success' ? 'alert-success' : 'alert-error' ?>">
+                <i class="fas <?= $pw_alert_type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle' ?>"></i>
+                <span><?= htmlspecialchars($pw_alert) ?></span>
+            </div>
+        <?php endif; ?>
 
         <!-- Ringkasan Total Pesanan & Pendapatan -->
         <div class="summary-cards">
@@ -559,7 +722,6 @@ $export_url = 'admin.php?' . http_build_query($export_params);
                                 <td class="notes-text"><?= htmlspecialchars($row['notes']) ?: '-' ?></td>
                                 <td style="font-weight: 600;">Rp<?= number_format($row['total_price'], 0, ',', '.') ?></td>
                                 <td>
-                                    <!-- Form Dropdown Status -->
                                     <form method="POST" action="" style="margin: 0;">
                                         <input type="hidden" name="update_status" value="1">
                                         <input type="hidden" name="order_id" value="<?= $row['order_id'] ?>">
@@ -594,5 +756,43 @@ $export_url = 'admin.php?' . http_build_query($export_params);
             </div>
         <?php endif; ?>
     </div>
+
+    <!-- Modal Ubah Kata Sandi -->
+    <div class="modal-overlay" id="pwModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i class="fas fa-key" style="color: var(--color-orange);"></i> UBAH KATA SANDI ADMIN</h3>
+                <button type="button" class="modal-close" id="closePwModal">&times;</button>
+            </div>
+            <form method="POST" action="">
+                <input type="hidden" name="action" value="change_password">
+                <div class="modal-group">
+                    <label for="old_password">Kata Sandi Lama</label>
+                    <input type="password" id="old_password" name="old_password" required placeholder="Masukkan sandi saat ini">
+                </div>
+                <div class="modal-group">
+                    <label for="new_password">Kata Sandi Baru (Min. 6 karakter)</label>
+                    <input type="password" id="new_password" name="new_password" required minlength="6" placeholder="Masukkan sandi baru">
+                </div>
+                <div class="modal-group">
+                    <label for="confirm_password">Konfirmasi Kata Sandi Baru</label>
+                    <input type="password" id="confirm_password" name="confirm_password" required minlength="6" placeholder="Ulangi sandi baru">
+                </div>
+                <button type="submit" class="btn-save-pw">SIMPAN KATA SANDI BARU</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const pwModal = document.getElementById('pwModal');
+        const openPwModal = document.getElementById('openPwModal');
+        const closePwModal = document.getElementById('closePwModal');
+
+        openPwModal.addEventListener('click', () => pwModal.classList.add('active'));
+        closePwModal.addEventListener('click', () => pwModal.classList.remove('active'));
+        pwModal.addEventListener('click', (e) => {
+            if (e.target === pwModal) pwModal.classList.remove('active');
+        });
+    </script>
 </body>
 </html>
