@@ -43,6 +43,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const qtyInput = $('orderQty');
         const dateInput = $('orderDate');
         const feedback = $('orderFeedback');
+        const waInput = $('orderWA');
+        waInput.addEventListener('input', () => {
+            // Menghapus semua karakter selain angka 0-9 secara otomatis saat diketik atau di-paste
+            waInput.value = waInput.value.replace(/\D/g, '');
+        });
         const fmt = (n) => `Rp${n.toLocaleString('id-ID')}`;
 
         dateInput.min = localISO();
@@ -257,7 +262,7 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'success' && data.data.length > 0) {
-                    const topReviews = data.data.filter(r => parseInt(r.rating, 10) >= 4).slice(0, 3);
+                    const topReviews = data.data.filter(r => parseInt(r.rating, 10) >= 5).slice(0, 3);
                     
                     if (topReviews.length > 0) {
                         homeReviewContainer.innerHTML = topReviews.map(r => `
