@@ -54,7 +54,7 @@ if (!isset($_SESSION['is_admin_logged_in']) || $_SESSION['is_admin_logged_in'] !
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="shortcut icon" href="foto produk/logo-bowlicious.png" type="image/x-icon" />
+        <link rel="shortcut icon" href="foto_produk/logo-bowlicious.png" type="image/x-icon" />
         <title>Login Admin | BOWLICIOUS</title>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">

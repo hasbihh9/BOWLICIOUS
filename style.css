@@ -714,6 +714,6 @@ footer {
         display: none !important;
     }
     .hero-section {
-        background: url('vd/bg\ bumbu.jpg') center/cover no-repeat; /*gambar pengganti */
+        background: url('vd/bg_bumbu.jpg') center/cover no-repeat;
     }
 }
